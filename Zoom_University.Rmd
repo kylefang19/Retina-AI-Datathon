@@ -1,0 +1,427 @@
+---
+title: "Datathon Submission Template"
+author: "[Retina AI](https://retina.ai)"
+date: '`r format(Sys.time(), "%d %B, %Y")`'
+output: 
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+#if your machine doesn't have these libraries, use 'install.packages(<package name>)' to install first before loading
+library(glue)
+library(tidyverse)
+library(dplyr)
+library(highcharter)
+knitr::opts_chunk$set(echo = FALSE)
+#test_data1 <- read_csv('')
+#test_data2 <- read_csv('')
+#test_data3 <- read_csv('')
+```
+
+
+## Retina AI R Datathon - Submission Template
+
+*Team Name*: Zoom University\
+*Team Members*: Kyle Fang, Jiahao Huang, William Foote\
+*Team Members Email*: kylefang19@g.ucla.edu, jiahao303@g.ucla.edu, williamfoote@g.ucla.edu\
+*Designated Slides*: Slides 12-13\
+
+```{r, include=FALSE}
+#Include your codes to read all datasets here
+chart <- read.csv("chart_12.csv")
+ltr <- read.csv("chart_13.csv")
+
+```
+
+*Directions*: Write your text and codes for Task 1, 2 and 3 in the provided space below.\
+
+Task 1 insights to the visualization can be written as plain text in the field provided below. You can also add new bullet points to each slide's insights section.\
+
+For Task 2 and 3, provide your codes in the code chunks below. If your team needs additional code chunks to run your code, you can add new code chunks.
+\pagebreak
+
+## Task 1 (Required)
+
+*Slide Number*: 12\
+
+*Key Insights min 2 / max 4*:  
+1. The tailedness of a distribution quanitifed by kurtosis. A heavy tail in the raw number of customers indicates a very highly peaked distribution or many outliers. The implications of this are dependent on the skewedness.  
+
+A heavy tail with left-skewed data translates to a lot of high-paying customers, which is very good for the company. However, a heavy tail matched with right-skewed data translates to reliance on a few high-paying customers.  
+
+On the other hand a low tail indicates a flatter distribution and less outliers. Generally there is less risk as the customer based is diversified and not heavily relying on a few high-paying customers.  
+
+
+2. The skewedness of the plot measured by skewedness. A left skew means there are a lot of high-paying customers, which is great for the business. No skew means the company is reliant on the average customer, and the average customer is robust. Right skew means there are only a few high-paying customers, which is not good because the company is reliant on these few high-paying customers.
+
+\pagebreak
+
+*Slide Number*: 13\
+
+*Key Insights min 2 / max 4*:  
+1. Whether the mean is greater than the median.  
+
+If the mean is greater than the median, the LTR distribution is right-skewed. The business is reliant on a small amount of high-spending customers.
+
+If the median is greater than the mean, the LTR distribution is left-skewed. The business has a big number of high-spending customers.
+  
+2. Whether the relationship between the median and mean change over time. This has different implications depending on whether or not the mean is greater than median.\
+
+3. The existence of "pesky trends". The periods of time (6 months) where the trend of the difference between the median and mean of the LTR is unusual compared to the overall trend. This has different implications depending on whether or not the mean is greater than the median. The pesky trends are helpful in determining if the trends in the current times are consistent with the overall trend.\
+
+4. The exact times of those pesky trends. Those times should be further investigated as it could indicate times of unusual success or failure for the business, and one might be interested to see what other factors lead to these abnormalities.\
+\pagebreak
+
+
+## Task 2 (Required)
+
+```{r, include=FALSE}
+library(glue)
+library(tidyverse)
+library(highcharter)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+*Slide Number*: 12\
+```{r, include=TRUE}
+#Enter your codes to automize insights for the first slide here
+
+### Recreate distribution of raw customer data
+chart_data <- numeric(0)
+for (i in seq_len(nrow(chart))) {
+  chart_data <- c(chart_data, rep(chart$Lifetime.Revenue..USD.[i], chart$Series.1[i]))
+}
+
+### Functions for measuring kurtosis and skewness
+kurtosis <- function(x) {
+  # This function takes in a distribution and outputs the kurtosis. 
+  
+  # Arguments:
+  # x: the data set. Should be a one-dimensional vector with values for each data point.
+  
+  ((1 / length(x)) * sum((x - mean(x))^4)) / (((1 / length(x)) * sum((x - mean(x))^2))^2)
+}
+
+skewness <- function(x) {
+  # This function takes in a distribution and outputs the skewness 
+  
+  # Arguments:
+  # x: the data set. Should be a one-dimensional vector with values for each data point.
+  
+  (sum((chart_data - mean(chart_data))^3) / length(chart_data)) / (sum((chart_data - mean(chart_data))^2) / length(chart_data)) ^ (3/2)
+}
+
+
+### compute kurtosis
+excess_kurtosis <- kurtosis(chart_data) - 3 # excess kurtosis is kurtosis - 3
+skewness_value <- skewness(chart_data)
+
+
+
+### print different cases (9 cases)
+if (excess_kurtosis < -2) {
+  if (skewness_value < -1) {
+    print(paste("Since the excess kurtosis is low/below -2 (", as.character(round(excess_kurtosis, 2)), "), there is not much variance in the customer lifetime revenues, reflecting a very diverse customer risk profile. The skewness below -1 (", as.character(round(skewness_value, 2)), ") reflects a left-skewed customer lifetime revenue distribution, indicating that the presence of many low-revenue customers are bringing the mean down.", sep = ""))
+  } else if (skewness_value < 1) {
+    print(paste("Since the excess kurtosis is low/below -2 (", as.character(round(excess_kurtosis, 2)), "), there is not much variance in the customer lifetime revenues, reflecting a very diverse customer risk profile. The skewness between -1 and 1 (", as.character(round(skewness_value, 2)), ") reflects a non-skewed customer lifetime revenue distribution, indicating that the presence of low-revenue customers and loyal customers (whales) bring the mean close to the median.", sep = ""))
+  } else {
+    print(paste("Since the excess kurtosis is low/below -2 (", as.character(round(excess_kurtosis, 2)), "), there is not much variance in the customer lifetime revenues, reflecting a very diverse customer risk profile. The skewness above 1 (", as.character(round(skewness_value, 2)), ") reflects a right-skewed customer lifetime revenue distribution, indicating that the presence of many loyal customers (whales) bring the mean up.", sep = ""))
+  }
+} else {
+  if (excess_kurtosis < 2) {
+    if (skewness_value < -1) {
+      print(paste("Since the excess kurtosis is medium/between -2 and 2 (", as.character(round(excess_kurtosis, 2)), "), there is some variance in the customer lifetime revenues, reflecting a moderately diverse customer risk profile. The skewness below -1 (", as.character(round(skewness_value, 2)), ") reflects a left-skewed customer lifetime revenue distribution, indicating that the presence of many low-revenue customers are bringing the mean down.", sep = ""))
+    } else if (skewness_value < 1) {
+      print(paste("Since the excess kurtosis is medium/between -2 and 2 (", as.character(round(excess_kurtosis, 2)), "), there is some variance in the customer lifetime revenues, reflecting a moderately diverse customer risk profile. The skewness between -1 and 1 (", as.character(round(skewness_value, 2)), ") reflects a non-skewed customer lifetime revenue distribution, indicating that the presence of low-revenue customers and loyal customers (whales) bring the mean close to the median.", sep = ""))
+    } else {
+      print(paste("Since the excess kurtosis is medium/between -2 and 2 (", as.character(round(excess_kurtosis, 2)), "), there is some variance in the customer lifetime revenues, reflecting a moderately diverse customer risk profile. The skewness above 1 (", as.character(round(skewness_value, 2)), ") reflects a right-skewed customer lifetime revenue distribution, indicating that the presence of many loyal customers (whales) bring the mean up.", sep = ""))
+    }
+  } else { # excess_kertosis is greater than 2
+    if (skewness_value < -1) {
+      print(paste("Since the excess kurtosis is high/above 2 (", as.character(round(excess_kurtosis, 2)), "), there is a lot of variance in the customer lifetime revenues, reflecting a lack of a diverse customer risk profile. The skewness below -1 (", as.character(round(skewness_value, 2)), ") reflects a left-skewed customer lifetime revenue distribution, indicating that the presence of many low-revenue customers are bringing the mean down.", sep = ""))
+    } else if (skewness_value < 1) {
+      print(paste("Since the excess kurtosis is high/above 2 (", as.character(round(excess_kurtosis, 2)), "), there is a lot of variance in the customer lifetime revenues, reflecting a lack of a diverse customer risk profile. The skewness between -1 and 1 (", as.character(round(skewness_value, 2)), ") reflects a non-skewed customer lifetime revenue distribution, indicating that the presence of low-revenue customers and loyal customers (whales) bring the mean close to the median.", sep = ""))
+    } else {
+      print(paste("Since the excess kurtosis is high/above 2 (", as.character(round(excess_kurtosis, 2)), "), there is a lot of variance in the customer lifetime revenues, reflecting a lack of a diverse customer risk profile. The skewness above 1 (", as.character(round(skewness_value, 2)), ") reflects a right-skewed customer lifetime revenue distribution, indicating that the presence of many loyal customers (whales) bring the mean up.", sep = ""))
+    }
+  }
+}
+```
+\pagebreak
+
+*Slide Number*: 13\
+```{r, include=TRUE}
+### analyze_ltr function ###
+analyze_ltr <- function(x, alpha = .05, show_lm_summary = FALSE) {
+  # First, for analyzing LTR data and investigating whether the mean and median
+  # are converging towards or diverging away from each other.
+  # Second, for analyzing LTR data and investigating which of the mean or median
+  # is greater.
+  # Overall, the goal is to give a business a snapshot as to how their company is
+  # doing in terms of risk management. Is their financial status becoming more or
+  # less risky in terms of how reliant they are on a few high-spending customers?
+  
+  # Arguments:
+  
+  # x: the data set. Should be formatted in 3 columns and any number of rows, with
+  # the three columns being time of X measurement, Mean 5 Year CLV, and Median 5
+  # year CLV.
+  
+  # alpha: The significance level for the tests to be run.
+  
+  # show_lm_summary: Logical to decide if the summary(lm) should be outputted
+  # so that one can see the specific values of the test that was run.
+  
+  x$diff <- x[, 2] - x[, 3]
+  x$ob <- seq_len(nrow(x))
+  model <- lm(diff ~ ob, data = x)
+  p_val <- (summary(model)$coefficients)[2, 4]
+  slope <- (summary(model)$coefficients)[2, 1]
+  mean <- x[[nrow(x), 2]]
+  median <- x[[nrow(x), 3]]
+  if (p_val <= alpha) {
+    if (mean > median) {
+      if (slope < 0) {
+        final <- "The mean is greater than the median, but the mean is converging towards the median. The distribution of LTR is becoming less right-skewed. The business is becoming less reliant on whales by building a more robust, average customer -- it is removing outliers that spend the most. The business's risk profile is decreasing, as it becomes less dependent on a few, high-spending customers."
+      } else {
+        final <- "The mean is less than the median, and the mean is diverging away from the median. The distribution of LTR is becoming more right-skewed. The business is becoming more reliant on whales, and is supported mostly by a few customers that spend the most. The business' risk profile is increasing, as it is becoming more dependent on a few, high-spending customers."
+        }
+      }
+    } else {
+        final <- "The relationship between mean and median has not significantly changed over time."
+        }
+  if (show_lm_summary) {
+    final <- list(c("Summary" = summary(model), "Insight" = final))
+  }
+  final
+}
+
+
+### pesky_trends function ###
+pesky_trends <- function(x, bin_size = 6, show_boxplot = FALSE) {
+  # First, for determining if there are any time periods where the slope
+  # estimate (based on linear regression of difference between mean and median
+  # versus observation number (i.e. time)) are outlyingly different from the
+  # other time periods. What factors might have led to these unusual trends?
+  # Can these factors be replicated or avoided to induce or inhibit future
+  # financial success or failure, respectively?
+  
+  # Second, for corroborating the findings of analyze_ltr. That is, if analyze_ltr
+  # models an overall trend, does the most recent snapshot in time support or
+  # dispute these findings. Differing signs between the overall slope estimate
+  # and the slope estimate for the most recent time period subset suggests that
+  # though a general trend is seen overall, most recently this trend has been
+  # shifting. Does the most recent snapshot highlight a silver lining
+  # or indicate a cause for worry?
+  
+  # Arguments:
+  
+  # x: the data set. Should be formatted in 3 columns and any number of rows, with
+  # the three columns being time of X measurement, Mean 5 Year CLV, and Median 5
+  # year CLV.
+  
+  # bin_size: the subset size (in months)for which the function will
+  # look at the rolling slope estimate. A bin_size of 6 means that one
+  # looks at subsets of the data in groups of 6 months at a time.
+  
+  # show_boxplot: Logical as to whether the boxplot of rolling slope estimates
+  # for difference in mean and median LTR should be outputted.
+  
+  x$diff <- x[, 2] - x[, 3]
+  x$ob <- seq_len(nrow(x))
+  slope_estimates <- numeric(nrow(x) - bin_size + 1)
+  for (i in seq_len(length(slope_estimates))) {
+    temp_lm <- lm(diff ~ ob, data = x[i:(i + bin_size - 1), ])
+    slope <- (summary(temp_lm)$coefficients)[2, 1]
+    slope_estimates[i] <- as.numeric(slope)
+  }
+  box_outliers <- boxplot(slope_estimates, plot = FALSE)$out
+  if (length(box_outliers) == 0) {
+    final <- paste("There are no points of interest to further investigate. There were no periods where the given slope estimate (of the difference between mean and median LTR) of the subset was outlyingly different than the slope estimates of the other sub-groups.")
+  } else {
+    outs <- unlist(which(slope_estimates %in% box_outliers))
+    num_outs <- length(outs)
+    final <- paste(c("There are", num_outs, "points of interest to further investigate. The slope estimate (of the difference between mean and median LTR) for at least one subset of the data was outlyingly different than the slope estimates of the other sub-groups. The sub-groups beginning at indices ", paste(outs, collapse = ", "), " should each be investigated for further insight as to why the trend might have been different for this time period as opposed to the rest of the data. What factors may have led to unusual success or failure over a given stretch?"), collapse = " ")
+  }
+  if (show_boxplot) {
+    boxplot(slope_estimates, ylab = expression("Slope Estimate for LTR Mean - Median"),
+            main = c("Boxplot of Slope Estimates for LTR Mean - Median\n",paste(c("For ", bin_size, "-Month Subsets"), collapse = "")),
+            col = colors()[sample(1:656)], horizontal = TRUE)
+  }
+  final
+}
+
+
+### bridge between analyze_ltr and pesky_trends ###
+corroborate_findings <- function(x, alpha = .05, bin_size = 6, show_plot = FALSE) {
+  # For confirming if the overall trend in difference between mean and median LTR over time
+  # matches that of the trend seen in most recent times. Do these trends match, or has
+  # business changed recently?
+  
+  # Arguments
+  
+  # x: the data set. Should be formatted in 3 columns and any number of rows, with
+  # the three columns being time of X measurement, Mean 5 Year CLV, and Median 5
+  # year CLV.
+  
+  # alpha: The significance level for the tests to be run.
+  
+  # bin_size: the subset size (in months)for which the function will
+  # look at the rolling slope estimate. A bin_size of 6 means that one
+  # looks at subsets of the data in groups of 6 months at a time.
+  
+  # plot_rolling_diff: STILL NEED TO ADD PLOT FOR OVERALL DATA WITH ROLLING ESTIMATE PLOTTED ON TOP IN DIFFERENT COLOR
+
+  x$diff <- x[, 2] - x[, 3]
+  x$ob <- seq_len(nrow(x))
+  model <- lm(diff ~ ob, data = x)
+  p_val <- (summary(model)$coefficients)[2, 4]
+  slope <- (summary(model)$coefficients)[2, 1]
+  n <- nrow(x)
+  temp_lm <- lm(diff ~ ob, data = x[(n - bin_size + 1):n, ])
+  slope_recent <- (summary(temp_lm)$coefficients)[2, 1]
+  if (p_val <= alpha) {
+    if (sign(slope) == sign(slope_recent)) {
+      final <- "The recent trend of the LTR matches the overall trend of the data."
+    } else {
+      final <- "The recent trend of the LTR does not match the overall trend of the data. Investigate the recent trends further as the overall risk profile may be changing differently than what the overall data suggests."
+    }
+  } else {
+    final <- "The mean is less than the median, but the mean is converging towards from the median. The distribution of LTR is becoming less left-skewed. The business is becoming more reliant on whales, and is becoming more and more supported by a few customers that spend the most. The business' risk profile is increasing, as it is becoming more dependent on a few, high-spending customers."
+  }
+  if (show_plot) {
+    
+    slope_estimates <- numeric(nrow(x) - bin_size + 1)
+    for (i in seq_len(length(slope_estimates))) {
+      temp_lm <- lm(diff ~ ob, data = x[i:(i + bin_size - 1), ])
+      slope <- (summary(temp_lm)$coefficients)[2, 1]
+      slope_estimates[i] <- as.numeric(slope)
+    }
+    
+    par(mfrow = c(1, 2))
+    plot(diff ~ ob, data = x, col = "dodgerblue", pch = 19,
+    xlab = "Time Since Ob. 1",
+    ylab = "(Mean - Median) LTR",
+    main = "(Mean - Median) LTR Over Time", cex.main = .85)
+    slope_est_temp <- c(rep(NA, times = (bin_size - 1)), slope_estimates)
+    plot(slope_est_temp, type = "l", lty = 2, lwd = 3, col = "tan3", xlab = "Time Since Ob. 1", ylab = "Est. Slope of (Mean - Median) LTR", main = paste(c("Rolling Slope Est. of (Mean - Median) LTR\nper ",bin_size, "-Month Period"), collapse = ""), cex.main = .75)
+    
+  }
+  
+  
+  final
+}
+
+
+### Running the functions
+analyze_ltr(ltr)
+pesky_trends(ltr, bin_size = 6, show_boxplot = FALSE)
+corroborate_findings(ltr, alpha = .05, bin_size = 6, show_plot = FALSE)
+```
+\pagebreak
+
+
+
+## Task 3 (Bonus/Optional)
+
+*Key Insights min 2 / max 4*: 
+- Kurtosis and Skewness visualization\
+
+*How to read this chart*:
+The boxes represent how close or far the point is to being in the ideal kurtosis and skewness levels. This graph visualizes insight 1 and 2 in slide and allows the user to tell how far and in what direction is he away from normal distribution.
+
+Because there is no standard cutoff for kurtosis or skewness in determining whether a distribution is truly classified as normal, this plot can help users get a sense of how far there distribution is from normal distribution.
+
+
+```{r, include=TRUE}
+x_limit = c(-1 * max(abs(skewness_value + 1), abs(skewness_value - 1)), max(abs(skewness_value + 1), abs(skewness_value - 1)))
+
+y_limit = c(-1 * max(abs(excess_kurtosis + 1), abs(excess_kurtosis - 1)), max(abs(excess_kurtosis + 1), abs(excess_kurtosis - 1)))
+
+plot(skewness_value, excess_kurtosis, xlim = x_limit, ylim = y_limit, col = "blue", pch = 19, xlab = "Skewness", ylab = "Kurtosis")
+xlab = "Skewness"
+ylab = "Kurtosis"
+
+rect(x_limit[1] - 100, y_limit[1] - 100, x_limit[2] + 100, y_limit[2] + 100, col = "lightgray")
+rect(x_limit[1] - 100, -2, x_limit[2] + 100, 2, col = "tan3")
+rect(-1, y_limit[1] - 100, 1, y_limit[2] + 100, col = "tan3")
+rect(-1, -2, 1, 2, col="dodgerblue", border=par("fg"), lty=NULL, lwd=par("lwd"), xpd=FALSE)
+
+points(skewness_value, excess_kurtosis, xlim = x_limit, ylim = y_limit, col = "yellow", pch = 19)
+text(x = skewness_value, y = excess_kurtosis - 3, labels = "Skewness and Kurtosis\nfor Data from Chart 12", cex = .75)
+
+```
+\pagebreak
+
+
+*Key Insights min 2 / max 4*: 
+- Boxplot of rolling slope estimates for the difference of the means and medians.
+*How to read this chart*:
+- The boxplot shows potential instances where the slope estimate for a given time period subset is outlyingly different than the other slope estimates. It shows visualizes how extreme the outlying are. 
+
+When the mean is greater than the median, the following statements are true.  
+
+* The outliers on the right indicate time periods where the businesses are becoming unusually more dependent on a few, high-spending customers.  
+* The outliers on the left indicate time periods where businesses are unusually successful in becoming less dependent on a few, high-spending customers.  
+
+
+When median is greater than the mean, the opposite is true.
+
+* The outliers on the right indicate time periods where businesses are unusually successful in becoming less dependent on a few, low-spending customers.  
+* The outliers on the left indicate time periods where the businesses are becoming unusually more dependent on a few, low-spending customers.  
+
+```{r, include=TRUE}
+### this boxplot is also found in the pesky_trends code above, but we suppressed by passing show_boxplot = FALSE
+bin_size = 6
+
+ltr$diff <- ltr[, 2] - ltr[, 3]
+ltr$ob <- seq_len(nrow(ltr))
+
+slope_estimates <- numeric(nrow(ltr) - bin_size + 1)
+for (i in seq_len(length(slope_estimates))) {
+  temp_lm <- lm(diff ~ ob, data = ltr[i:(i + bin_size - 1), ])
+  slope <- (summary(temp_lm)$coefficients)[2, 1]
+  slope_estimates[i] <- as.numeric(slope)
+}
+
+boxplot(slope_estimates, ylab = expression("Slope Estimate for LTR Mean - Median"),
+        main = c("Boxplot of Slope Estimates for LTR Mean - Median\n",paste(c("For ", bin_size, "-Month Subsets"), collapse = "")),
+        col = "lightgray", horizontal = TRUE)
+
+```
+\pagebreak
+
+
+
+
+
+*Key Insights min 2 / max 4*: 
+- Plots of rolling slope estimates for the difference of the means and medians.
+*How to read this chart*:
+These graphs plot the rolling means against time.
+
+If the trend at the end (near current months) is different from the overall trend, there is cause for worry. It should be investigated further as the business's risk profile may have changed recently and could be changing changing currently.
+
+
+```{r, include=TRUE}
+### this boxplot is also found in the pesky_trends code above, but we suppressed by passing show_boxplot = FALSE
+ # slope_estimates <- numeric(nrow(x) - bin_size + 1)
+ #  for (i in seq_len(length(slope_estimates))) {
+ #     temp_lm <- lm(diff ~ ob, data = x[i:(i + bin_size - 1), ])
+ #    slope <- (summary(temp_lm)$coefficients)[2, 1]
+ #    slope_estimates[i] <- as.numeric(slope)
+ #  }
+    
+  par(mfrow = c(1, 2))
+  plot(diff ~ ob, data = ltr, col = "dodgerblue", pch = 19,
+  xlab = "Time Since Ob. 1",
+  ylab = "(Mean - Median) LTR",
+  main = "(Mean - Median) LTR Over Time", cex.main = .85)
+  slope_est_temp <- c(rep(NA, times = (bin_size - 1)), slope_estimates)
+  plot(slope_est_temp, type = "l", lty = 2, lwd = 3, col = "tan3", xlab = "Time Since Ob. 1", ylab = "Est. Slope of (Mean - Median) LTR", main = paste(c("Rolling Slope Est. of (Mean - Median) LTR\nper ",bin_size, "-Month Period"), collapse = ""), cex.main = .75)
+
+```
+\pagebreak
+
